@@ -15,7 +15,7 @@
 ######################################################################
 
 """
-Test cases for Pet Model
+Test cases for promotion Model
 """
 
 # pylint: disable=duplicate-code
@@ -82,3 +82,16 @@ class TestPromotion(TestCase):
         self.assertEqual(data.validity, promotion.validity)
         self.assertEqual(data.start_date, promotion.start_date)
         self.assertEqual(data.end_date, promotion.end_date)
+
+    def test_read_a_promotion(self):
+        """It should Read a promotion"""
+        promotion = PromotionFactory()
+        promotion.create()
+        promo_id = promotion.id
+        self.assertEqual(len(Promotion.all()), 1)
+
+        # Fetch it back
+        found_promotion = promotion.find(promo_id)
+        self.assertIsNotNone(found_promotion)
+        self.assertEqual(found_promotion.id, promo_id)
+        self.assertEqual(found_promotion.product_id, promotion.product_id)

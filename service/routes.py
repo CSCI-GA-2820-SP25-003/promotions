@@ -66,6 +66,21 @@ def create_promotions():
 
     # TO BE DONE: also return the location of the newly created promotion once GET promotion is created
     return jsonify(promotion.serialize()), status.HTTP_201_CREATED
+
+# ----------------------
+#    READ A PROMOTION 
+# ----------------------
+@app.route("/promotions/<int:product_id>", methods=["GET"])
+def get_promotions(product_id):
+    app.logger.info("Request to Retrieve a promotion with id [%s]", product_id)
+
+    # Attempt to find the promotion and abort if not found
+    promotion = Promotion.find(product_id)
+    if not promotion:
+        abort(status.HTTP_404_NOT_FOUND, f"promotion with id '{product_id}' was not found.")
+
+    app.logger.info("Returning promotion: %s", promotion.name)
+    return jsonify(promotion.serialize()), status.HTTP_200_OK
     
 ######################################################################
 # Checks the ContentType of a request

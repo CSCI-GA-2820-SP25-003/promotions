@@ -25,6 +25,7 @@ import logging
 from unittest import TestCase
 import json
 import sys
+import random
 sys.path.append('..')
 from wsgi import app
 from service.common import status
@@ -68,6 +69,28 @@ class TestYourResourceService(TestCase):
     def tearDown(self):
         """This runs after each test"""
         db.session.remove()
+
+
+    def _create_promotions(self, count):
+        """Helper function to create multiple promotions"""
+        promotions = []
+        for _ in range(count):
+            test_promotion = PromotionFactory()
+            
+            if test_promotion.product_id is None:
+                test_promotion.product_id = random.randint(1000, 9999)
+            
+            response = self.client.post(BASE_URL, json=test_promotion.serialize())
+            self.assertEqual(
+                response.status_code, status.HTTP_201_CREATED, "Could not create test promotion"
+            )
+            new_promotion = response.get_json()
+
+            test_promotion.id = new_promotion["id"]
+            test_promotion.product_id = new_promotion["product_id"]
+            promotions.append(test_promotion)
+
+        return promotions
 
     ######################################################################
     #  P L A C E   T E S T   C A S E S   H E R E
@@ -233,3 +256,32 @@ class TestYourResourceService(TestCase):
         test_json["end_date"] = "2025-01-01"
         response = self.client.post(BASE_URL, json=test_json)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_get_a_promotion(self):
+        """It should return a Promotion if the promotion_id exists in the database"""
+        test_promo = self._create_promotions(1)[0]
+
+        resp = self.client.get(f"{BASE_URL}/{test_promo.id}")
+
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        
+        data = resp.get_json()
+
+        self.assertEqual(data["name"], test_promo.name)
+
+        self.assertEqual(data["category"], test_promo.category.name)
+        self.assertEqual(data["discount_x"], test_promo.discount_x)
+        self.assertEqual(data["discount_y"], test_promo.discount_y)
+        self.assertEqual(data["product_id"], test_promo.product_id)
+        self.assertEqual(data["description"], test_promo.description)
+        self.assertEqual(data["validity"], test_promo.validity)
+        self.assertEqual(data["start_date"], test_promo.start_date.isoformat())
+        self.assertEqual(data["end_date"], test_promo.end_date.isoformat())
+    
+    def test_get_promotion_not_found(self):
+        """It should not Get a promotion thats not found"""
+        error_id = 66666
+        promotion = PromotionFactory()
+        promotion.id = error_id
+        response = self.client.get(f"{BASE_URL}/{error_id}", json=promotion.serialize())
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
