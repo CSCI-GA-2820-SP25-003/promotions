@@ -23,6 +23,7 @@ from datetime import date
 import os
 import logging
 from unittest import TestCase
+import unittest
 import json
 import sys
 sys.path.append('..')
@@ -233,3 +234,32 @@ class TestYourResourceService(TestCase):
         test_json["end_date"] = "2025-01-01"
         response = self.client.post(BASE_URL, json=test_json)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_list_promotions_empty(self):
+        """
+        Test listing promotions when no promotions exist.
+        """
+        # Set the content type header as expected by check_content_type
+        headers = {"Content-Type": "application/json"}
+        response = self.client.get("/listPromotions", headers=headers)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        data = json.loads(response.data.decode())
+        # Expect an empty list if no promotions exist in the database
+        self.assertEqual(data.get("all_promotions"), [])
+
+    def test_list_promotions_with_data(self):
+        """
+        Test listing promotions after creating one promotion.
+        """
+        payload_list = [PromotionFactory().serialize() for _ in range(50)]
+        headers = {"Content-Type": "application/json"}
+        for payload in payload_list:
+            create_response = self.client.post("/promotions", json=payload, headers=headers)
+            self.assertEqual(create_response.status_code, 201)
+
+        list_response = self.client.get("/listPromotions", headers=headers)
+        self.assertEqual(list_response.status_code, status.HTTP_201_CREATED)
+        list_data = json.loads(list_response.data.decode())
+        self.assertIn("all_promotions", list_data)
+        self.assertEqual(len(list_data["all_promotions"]), 50)
+
