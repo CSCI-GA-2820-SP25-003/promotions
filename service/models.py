@@ -13,6 +13,7 @@ validity (boolean) - whether the promotion is valid/running
 start_date (string) - the start date of the sale
 end_date (string) - the end date of the sale
 """
+
 from datetime import date
 from enum import Enum
 
@@ -48,7 +49,9 @@ class Promotion(db.Model):
     ##################################################
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(63))
-    category = db.Column(db.Enum(Category), nullable=False, server_default=Category.UNKNOWN.name)
+    category = db.Column(
+        db.Enum(Category), nullable=False, server_default=Category.UNKNOWN.name
+    )
     discount_x = db.Column(db.Integer(), nullable=False, default=0)
     discount_y = db.Column(db.Integer(), nullable=True, default=None)
     product_id = db.Column(db.Integer(), nullable=False)
@@ -58,8 +61,9 @@ class Promotion(db.Model):
     end_date = db.Column(db.Date(), nullable=False, default=date.today())
     # Database auditing fields
     created_at = db.Column(db.DateTime, default=db.func.now(), nullable=False)
-    last_updated = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now(), nullable=False)
-
+    last_updated = db.Column(
+        db.DateTime, default=db.func.now(), onupdate=db.func.now(), nullable=False
+    )
 
     def __repr__(self):
         return f"<Promotion {self.name} id=[{self.id}]>"
@@ -113,7 +117,7 @@ class Promotion(db.Model):
             "description": self.description,
             "validity": self.validity,
             "start_date": self.start_date.isoformat(),
-            "end_date": self.end_date.isoformat()
+            "end_date": self.end_date.isoformat(),
         }
 
     def deserialize(self, data):
@@ -137,7 +141,7 @@ class Promotion(db.Model):
                         "Invalid type for int [discount_x]: "
                         + str(type(data["discount_x"]))
                     )
-                
+
             if "discount_y" in data:
                 if isinstance(data["discount_y"], int) or data["discount_y"] == None:
                     self.discount_y = data["discount_y"]
@@ -146,7 +150,7 @@ class Promotion(db.Model):
                         "Invalid type for int [discount_y]: "
                         + str(type(data["discount_y"]))
                     )
-                
+
             if isinstance(data["product_id"], int):
                 self.product_id = data["product_id"]
             else:
@@ -154,7 +158,7 @@ class Promotion(db.Model):
                     "Invalid type for int [product_id]: "
                     + str(type(data["product_id"]))
                 )
-            
+
             self.description = data["description"]
 
             if "validity" in data:
@@ -165,7 +169,7 @@ class Promotion(db.Model):
                         "Invalid type for bool [validity]: "
                         + str(type(data["validity"]))
                     )
-                
+
             if "start_date" in data:
                 if isinstance(data["start_date"], str):
                     self.start_date = date.fromisoformat(data["start_date"])
@@ -174,16 +178,14 @@ class Promotion(db.Model):
                         "Invalid type for string [start_date]: "
                         + str(type(data["start_date"]))
                     )
-                
+
             if "end_date" in data:
                 if isinstance(data["end_date"], str):
                     end_date = date.fromisoformat(data["end_date"])
                     if end_date >= self.start_date:
                         self.end_date = end_date
                     else:
-                        raise DataValidationError(
-                            "Invalid end date before start date"
-                        )
+                        raise DataValidationError("Invalid end date before start date")
                 else:
                     raise DataValidationError(
                         "Invalid type for string [end_date]: "
@@ -201,9 +203,7 @@ class Promotion(db.Model):
                 + str(error)
             ) from error
         except ValueError as error:
-            raise DataValidationError(
-                str(error)
-            )
+            raise DataValidationError(str(error))
         return self
 
     ##################################################
