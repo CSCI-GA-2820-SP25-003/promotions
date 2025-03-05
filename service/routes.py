@@ -21,13 +21,14 @@ This service implements a REST API that allows you to Create, Read, Update
 and Delete Promotion
 """
 
-from flask import jsonify, request, url_for, abort
+from flask import jsonify, request, url_for, make_response, abort
 from flask import current_app as app  # Import Flask application
 from service.models import Promotion, Category
 from service.common import status  # HTTP Status Codes
 from flask import Blueprint, request, jsonify
 from service.models import Promotion, DataValidationError
 from datetime import datetime, date
+
 
 ######################################################################
 # GET INDEX
@@ -52,6 +53,7 @@ def index():
 
 ##----------------------------------------------------------------------------##
 
+
 @app.route("/promotions", methods=["POST"])
 def create_promotions():
     """
@@ -65,18 +67,14 @@ def create_promotions():
     data = request.get_json()
     app.logger.info("Processing: %s", data)
     promotion.deserialize(data)
-        
+
     promotion.create()
     app.logger.info("Promotion with new id [%s] saved", promotion.id)
 
     # TO BE DONE: also return the location of the newly created promotion once GET promotion is created
     return jsonify(promotion.serialize()), status.HTTP_201_CREATED
 
-@app.route("/promotions", methods=["GET"])
-def list_promotions():
-    """Return all the promotions"""
-    # To be done
-    
+
 ######################################################################
 # Checks the ContentType of a request
 ######################################################################
@@ -97,3 +95,23 @@ def check_content_type(content_type) -> None:
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         f"Content-Type must be {content_type}",
     )
+
+
+######################################################################
+# Delete a Promotion
+######################################################################
+@app.route("/promotions/<int:promotion_id>", methods=["DELETE"])
+def delete_promotions(promotion_id):
+    """
+    Delete a Promotion
+
+    This endpoint will delete a Promotion based the id specified in the path
+    """
+    app.logger.info("Request to Delete a promotion with id [%s]", promotion_id)
+    promotion = Promotion()
+    promotion = Promotion.find(promotion_id)
+
+    if promotion:
+        promotion.delete()
+
+    return make_response("", status.HTTP_204_NO_CONTENT)
