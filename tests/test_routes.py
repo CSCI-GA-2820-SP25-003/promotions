@@ -25,7 +25,8 @@ import logging
 from unittest import TestCase
 import json
 import sys
-sys.path.append('..')
+
+sys.path.append("..")
 from wsgi import app
 from service.common import status
 from service.models import db, Promotion, Category
@@ -69,6 +70,25 @@ class TestYourResourceService(TestCase):
         """This runs after each test"""
         db.session.remove()
 
+    ############################################################
+    # Utility function to bulk create promotions
+    ############################################################
+    def _create_promotions(self, count: int = 1) -> list:
+        """Factory method to create promotions in bulk"""
+        promotions = []
+        for _ in range(count):
+            test_promotion = PromotionFactory()
+            response = self.client.post(BASE_URL, json=test_promotion.serialize())
+            self.assertEqual(
+                response.status_code,
+                status.HTTP_201_CREATED,
+                "Could not create test promotion",
+            )
+            new_promotion = response.get_json()
+            test_promotion.id = new_promotion["id"]
+            promotions.append(test_promotion)
+        return promotions
+
     ######################################################################
     #  P L A C E   T E S T   C A S E S   H E R E
     ######################################################################
@@ -99,14 +119,16 @@ class TestYourResourceService(TestCase):
         self.assertEqual(new_promotion["product_id"], test_promotion.product_id)
         self.assertEqual(new_promotion["description"], test_promotion.description)
         self.assertEqual(new_promotion["validity"], test_promotion.validity)
-        self.assertEqual(new_promotion["start_date"], test_promotion.start_date.isoformat())
+        self.assertEqual(
+            new_promotion["start_date"], test_promotion.start_date.isoformat()
+        )
         self.assertEqual(new_promotion["end_date"], test_promotion.end_date.isoformat())
 
         # TO BE DONE
         # also needs to check the location header once GET route is created
 
     ##-------------------------------------------------------------------##
-    
+
     def test_discount_x_validation_create_promotion(self):
         """
         Test case to validate that discount_x can only be an int.
@@ -122,7 +144,7 @@ class TestYourResourceService(TestCase):
         self.assertEqual(response.get_json()["discount_x"], 0)
 
     ##-------------------------------------------------------------------##
-    
+
     def test_discount_y_validation_create_promotion(self):
         """
         Test case to validate that discount_y can only be an int or None.
@@ -145,7 +167,7 @@ class TestYourResourceService(TestCase):
         self.assertEqual(response.get_json()["discount_y"], None)
 
     ##-------------------------------------------------------------------##
-    
+
     def test_product_id_validation_create_promotion(self):
         """
         Test case to validate that product_id can only be an int.
@@ -176,6 +198,7 @@ class TestYourResourceService(TestCase):
         response = self.client.post(BASE_URL, json=test_json)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.get_json()["validity"], False)
+
     ##-------------------------------------------------------------------##
 
     def test_missing_product_id_create_promotion(self):
@@ -197,7 +220,7 @@ class TestYourResourceService(TestCase):
         del test_json["description"]
         response = self.client.post(BASE_URL, json=test_json)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-    
+
     ##-------------------------------------------------------------------##
 
     def test_date_create_promotion(self):
@@ -233,3 +256,46 @@ class TestYourResourceService(TestCase):
         test_json["end_date"] = "2025-01-01"
         response = self.client.post(BASE_URL, json=test_json)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    # ----------------------------------------------------------
+    # TEST DELETE
+    # ----------------------------------------------------------
+    def _create_promotions(self, count: int = 1) -> list:
+        """Factory method to create promotions in bulk"""
+        promotions = []
+        for _ in range(count):
+            test_promotion = PromotionFactory()
+            response = self.client.post(BASE_URL, json=test_promotion.serialize())
+            self.assertEqual(
+                response.status_code,
+                status.HTTP_201_CREATED,
+                "Could not create test promotion",
+            )
+            new_promotion = response.get_json()
+            test_promotion.id = new_promotion["id"]
+            promotions.append(test_promotion)
+        return promotions
+
+    def get_promotion_count(self):
+        """Helper method to get the number of promotions in the database"""
+        return db.session.query(Promotion).count()
+
+    def test_delete_promotion(self):
+        """It should Delete a Promotion"""
+        promotions = self._create_promotions(5)
+        promotion_count = self.get_promotion_count()
+        test_promotion = promotions[0]
+        response = self.client.delete(f"{BASE_URL}/{test_promotion.id}")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(response.data), 0)
+        # make sure they are deleted
+        response = self.client.get(f"{BASE_URL}/{test_promotion.id}")
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        new_count = self.get_promotion_count()
+        self.assertEqual(new_count, promotion_count - 1)
+
+    def test_delete_non_existing_promotion(self):
+        """It should Delete a Promotion even if it doesn't exist"""
+        response = self.client.delete(f"{BASE_URL}/0")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(response.data), 0)
