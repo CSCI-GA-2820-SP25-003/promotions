@@ -25,6 +25,7 @@ from unittest import TestCase
 from wsgi import app
 from service.models import Promotion, DataValidationError, db
 from .factories import PromotionFactory
+from service.common import status
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -54,6 +55,7 @@ class TestPromotion(TestCase):
 
     def setUp(self):
         """This runs before each test"""
+        self.client = app.test_client()
         db.session.query(Promotion).delete()  # clean up the last tests
         db.session.commit()
 
@@ -82,3 +84,10 @@ class TestPromotion(TestCase):
         self.assertEqual(data.validity, promotion.validity)
         self.assertEqual(data.start_date, promotion.start_date)
         self.assertEqual(data.end_date, promotion.end_date)
+
+    def test_index(self):
+        """It should call the Home Page"""
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data["name"], "Promotion REST API Service")

@@ -36,9 +36,14 @@ from datetime import datetime, date
 @app.route("/")
 def index():
     """Root URL response"""
+    app.logger.info("Request for Root URL")
     return (
-        "Reminder: return some useful information in json format about the service here",
-        status.HTTP_200_OK,
+        jsonify(
+            name="Promotion REST API Service",
+            version="1.0",
+            paths=url_for("list_promotions", _external=True)
+        ),
+        status.HTTP_200_OK
     )
 
 
@@ -68,14 +73,6 @@ def create_promotions():
 
     # TO BE DONE: also return the location of the newly created promotion once GET promotion is created
     return jsonify(promotion.serialize()), status.HTTP_201_CREATED
-
-
-# ----------------------
-#    READ A PROMOTION
-# ----------------------
-@app.route("/promotions/count", methods=["GET"])
-def get_promotion_count():
-    return jsonify({"count": 10}), 200
 
 
 ######################################################################
