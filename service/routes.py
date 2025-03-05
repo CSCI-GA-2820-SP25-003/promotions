@@ -121,6 +121,3 @@ def delete_promotions(promotion_id):
         promotion.delete()
 
     return make_response("", status.HTTP_204_NO_CONTENT)
-
-
-# all pass
