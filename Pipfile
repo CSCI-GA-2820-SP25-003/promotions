@@ -10,6 +10,9 @@ psycopg = {extras = ["binary"], version = "~=3.2.4"}
 retry2 = "~=0.9.5"
 python-dotenv = "~=1.0.1"
 gunicorn = "~=23.0.0"
+behave = "*"
+selenium = "*"
+webdriver-manager = "*"
 
 [dev-packages]
 black = "~=25.1.0"
@@ -22,6 +25,10 @@ pytest-cov = "~=6.0.0"
 factory-boy = "~=3.3.1"
 honcho = "~=2.0.0"
 httpie = "~=3.2.4"
+behave = "*"
+selenium = "*"
 
 [requires]
 python_version = "3.11"
+behave = "*"
+selenium = "*"
