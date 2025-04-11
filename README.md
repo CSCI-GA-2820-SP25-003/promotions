@@ -93,6 +93,15 @@ flask run
 
 5. Access the API at http://127.0.0.1:8080.
 
+To run using local Kubernetes:
+```
+make cluster
+make build
+make push
+make postgres
+make deploy
+```
+(If `Get "https://cluster-registry:5000/v2/": dial tcp: lookup cluster-registry on 127.0.0.11:53: no such host` is shown after `make push`, run `sudo bash -c "echo '127.0.0.1    cluster-registry' >> /etc/hosts"`)
 
 ## Running Tests
 

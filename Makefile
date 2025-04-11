@@ -1,8 +1,9 @@
 # These can be overidden with env vars.
 REGISTRY ?= cluster-registry:5000
-IMAGE_NAME ?= petshop
+NAMESPACE ?= nyu-devops
+IMAGE_NAME ?= promotion
 IMAGE_TAG ?= 1.0
-IMAGE ?= $(REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG)
+IMAGE ?= $(REGISTRY)/$(NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)
 PLATFORM ?= "linux/amd64,linux/arm64"
 CLUSTER ?= nyu-devops
 
@@ -63,10 +64,23 @@ cluster-rm: ## Remove a K3D Kubernetes cluster
 	$(info Removing Kubernetes cluster...)
 	k3d cluster delete nyu-devops
 
+##@ Deploy
+
+.PHONY: postgres
+postgres: ## Deploy the PostgreSQL service on local Kubernetes
+	$(info Deploying PostgreSQL service to Kubernetes...)
+	kubectl apply -f k8s/postgres
+
 .PHONY: deploy
-deploy: ## Deploy the service on local Kubernetes
+deploy: postgres ## Deploy the service on local Kubernetes
 	$(info Deploying service locally...)
 	kubectl apply -f k8s/
+
+.PHONY: undeploy
+undeploy: ## Delete the deployment on local Kubernetes
+	$(info Removing service on Kubernetes...)
+	kubectl delete -f k8s/
+	kubectl delete -f k8s/postgres
 
 ############################################################
 # COMMANDS FOR BUILDING THE IMAGE
