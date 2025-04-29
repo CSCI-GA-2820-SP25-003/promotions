@@ -1,0 +1,43 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: behave-tests
+spec:
+  description: |
+    This task runs Behave BDD tests against the deployed service.
+  params:
+    - name: base-url
+      description: The base URL of the deployed service
+      default: "http://promotion:8080"
+    - name: wait-seconds
+      description: Maximum wait time for UI operations
+      default: "60"
+  steps:
+    - name: run-behave-tests
+      image: rofrano/nyu-devops-base:sp25
+      env:
+        - name: BASE_URL
+          value: $(params.base-url)
+        - name: WAIT_SECONDS
+          value: $(params.wait-seconds)
+      workingDir: /workspace/source
+      script: |
+        #!/bin/bash
+        set -e
+        
+        echo "Installing Chrome and ChromeDriver..."
+        apt-get update
+        apt-get install -y wget unzip google-chrome-stable
+        
+        CHROME_DRIVER_VERSION=$(google-chrome --version | awk '{print $3}' | cut -d. -f1)
+        wget -q "https://edgedl.me.gserviceusercontent.com/edgedl/chrome/chrome-for-testing/120.0.6099.71/linux64/chromedriver-linux64.zip" -O /tmp/chromedriver.zip
+        unzip /tmp/chromedriver.zip -d /tmp/
+        mv /tmp/chromedriver-linux64/chromedriver /usr/bin/chromedriver
+        chmod +x /usr/bin/chromedriver
+        
+        echo "Setting up Python environment..."
+        python -m pip install --upgrade pip
+        pipenv install --system --dev
+        
+        echo "Running Behave tests against $BASE_URL..."
+        pipenv run behave
