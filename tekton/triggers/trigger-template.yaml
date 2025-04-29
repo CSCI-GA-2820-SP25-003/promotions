@@ -1,0 +1,39 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: promotion-template
+spec:
+  params:
+    - name: gitRepository
+      description: The git repository URL
+    - name: gitRevision
+      description: The git revision
+      default: main
+    - name: contentType
+      description: The Content-Type of the event
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        generateName: promotion-pipeline-run-
+      spec:
+        pipelineRef:
+          name: promotion-pipeline
+        workspaces:
+          - name: source
+            volumeClaimTemplate:
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: 1Gi
+        params:
+          - name: repo-url
+            value: $(tt.params.gitRepository)
+          - name: branch-name
+            value: $(tt.params.gitRevision)
+          - name: service-name
+            value: promotion
+          - name: app-namespace
+            value: default
