@@ -1,0 +1,74 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: promotion-pipeline
+spec:
+  workspaces:
+    - name: source
+  params:
+    - name: repo-url
+      description: The git repository URL
+    - name: branch-name
+      description: The git branch
+      default: "main"
+    - name: service-name
+      description: The name of the service to deploy
+      default: "promotion"
+    - name: app-namespace
+      description: The namespace where the app is deployed
+      default: "default"
+  tasks:
+    - name: git-clone
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: source
+      params:
+        - name: url
+          value: $(params.repo-url)
+        - name: revision
+          value: $(params.branch-name)
+    
+    - name: build-image
+      taskRef:
+        name: kaniko
+      runAfter:
+        - git-clone
+      workspaces:
+        - name: source
+          workspace: source
+      params:
+        - name: IMAGE
+          value: "cluster-registry:5000/$(params.service-name):latest"
+        - name: CONTEXT
+          value: "."
+    
+    - name: deploy-to-k8s
+      taskRef:
+        name: kubernetes-actions
+      runAfter:
+        - build-image
+      workspaces:
+        - name: source
+          workspace: source
+      params:
+        - name: script
+          value: |
+            kubectl apply -f k8s/postgres
+            kubectl apply -f k8s/deployment.yaml
+            kubectl apply -f k8s/service.yaml
+            kubectl apply -f k8s/ingress.yaml
+            kubectl rollout status deployment/$(params.service-name) -n $(params.app-namespace) --timeout=180s
+
+    - name: behave-tests
+      taskRef:
+        name: behave-tests
+      runAfter:
+        - deploy-to-k8s
+      workspaces:
+        - name: source
+          workspace: source
+      params:
+        - name: base-url
+          value: "http://$(params.service-name).$(params.app-namespace).svc.cluster.local:8080"
