@@ -53,7 +53,7 @@ def frontend_index():
     return app.send_static_file("index.html")
 
 
-@api.route('/')
+@api.route('/', strict_slashes=False)
 class ApiRoot(Resource):
     @api.doc('root')
     def get(self):
