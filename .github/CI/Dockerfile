@@ -29,6 +29,9 @@ RUN apt-get update && \
 WORKDIR /app/frontend
 RUN npm install && npm run build
 
+RUN mkdir -p /app/static \
+    && cp -r build/* /app/static/
+
 # Set back to Flask app directory
 WORKDIR /app
 

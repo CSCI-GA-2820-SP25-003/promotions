@@ -49,10 +49,22 @@ api = Api(
 # Configure the Root route before OpenAPI
 ######################################################################
 @app.route("/")
+def frontend_index():
+    return app.send_static_file("index.html")
+
+
+@app.route("/api")
 def index():
     """Root URL response"""
     app.logger.info("Request for Root URL")
-    return app.send_static_file("index.html")
+    return (
+        {
+            "name": "Promotion REST API Service",
+            "version": "1.0",
+            "paths": api.url_for(PromotionCollection, _external=True),
+        },
+        status.HTTP_200_OK,
+    )
 
 
 ######################################################################
