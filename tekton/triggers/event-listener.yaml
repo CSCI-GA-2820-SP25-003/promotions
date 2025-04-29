@@ -1,0 +1,25 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: github-listener
+spec:
+  serviceAccountName: tekton-triggers-sa
+  triggers:
+    - name: github-push
+      interceptors:
+        - name: github
+          ref:
+            name: "github"
+          params:
+            - name: "secretRef"
+              value:
+                secretName: github-webhook-secret
+                secretKey: secretToken
+            - name: "eventTypes"
+              value: ["push"]
+            - name: "branch"
+              value: "main"
+      bindings:
+        - ref: github-push-binding
+      template:
+        ref: promotion-template
