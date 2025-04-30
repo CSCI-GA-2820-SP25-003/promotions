@@ -37,6 +37,7 @@ from service import api
 ######################################################################
 @app.route("/")
 def frontend_index():
+    """Return the frontend HTML index page."""
     return app.send_static_file("index.html")
 
 
@@ -388,6 +389,7 @@ class ExtendResource(Resource):
 ######################################################################
 @api.route("/", strict_slashes=False)
 class ApiRoot(Resource):
+    """Returns metadata for the root of the Promotion API."""
     def get(self):
         return {
             "name": "Promotion REST API Service",
