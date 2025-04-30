@@ -72,6 +72,17 @@ jobs:
           slug: CSCI-GA-2820-SP25-003/promotions
           files: coverage.xml
       
+      - name: Install Python Dependencies for BDD
+        run: |
+          pip install pipenv
+          pipenv install --dev --python $(which python3)
+        
+      - name: Install Google Chrome Stable
+        run: |
+          sudo apt-get update
+          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt-get install -f -y
+        
       - name: Run Flask service in background
         run: |
           docker run -d \
@@ -81,11 +92,11 @@ jobs:
             --name flask-service \
             my-devcontainer honcho start
           sleep 10
-  
+    
       - name: Run BDD Tests with Behave
-        run: docker exec flask-service behave
+        run: pipenv run behave
         env:
-          BASE_URL: http://nyu-project:8080
+          BASE_URL: http://localhost:8080
       
       - name: Stop Flask container
         run: docker stop flask-service
