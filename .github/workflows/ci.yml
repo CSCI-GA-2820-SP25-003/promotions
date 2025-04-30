@@ -51,7 +51,7 @@ jobs:
             my-devcontainer python -m pytest tests
 
       - name: Run flake8 linting
-        run: docker run --rm my-devcontainer flake8 .
+        run: docker run --rm my-devcontainer flake8 . --config=setup.cfg
 
       - name: Run pylint linting
         run: docker run --rm my-devcontainer pylint service wsgi.py
