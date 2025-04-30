@@ -53,12 +53,12 @@ def frontend_index():
     return app.send_static_file("index.html")
 
 
-@api.route('/')
+@api.route('/', endpoint='api_root_slash')
 class ApiRootSlash(Resource):
     def get(self):
         return _root_payload(), status.HTTP_200_OK
 
-@api.route('')
+@api.route('', endpoint='api_root_slash')
 class ApiRootNoSlash(Resource):
     def get(self):
         return _root_payload(), status.HTTP_200_OK
