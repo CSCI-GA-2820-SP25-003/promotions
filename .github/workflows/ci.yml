@@ -85,7 +85,7 @@ jobs:
       - name: Run BDD Tests with Behave
         run: docker exec flask-service behave
         env:
-          BASE_URL: http://localhost:8080
+          BASE_URL: http://nyu-project:8080
       
       - name: Stop Flask container
         run: docker stop flask-service
