@@ -26,23 +26,10 @@ from functools import wraps
 from datetime import datetime, date
 from flask import current_app as app  # Import Flask application
 from flask import request
-from flask_restx import Api, Resource, fields, reqparse, inputs
+from flask_restx import Resource, fields, reqparse, inputs
 from service.models import Promotion, Category
 from service.common import status  # HTTP Status Codes
-
-######################################################################
-# Configure Swagger before initializing it
-######################################################################
-api = Api(
-    app,
-    version="1.0.0",
-    title="Promotion REST API Service",
-    description="This is a promotion microservice server.",
-    default="promotions",
-    default_label="Promotion operations",
-    doc="/apidocs",  # default also could use doc='/apidocs/'
-    prefix="/api",
-)
+from service import api
 
 
 ######################################################################
@@ -51,16 +38,6 @@ api = Api(
 @app.route("/")
 def frontend_index():
     return app.send_static_file("index.html")
-
-
-@api.route('', strict_slashes=False, endpoint='api_root')
-class ApiRoot(Resource):
-    def get(self):
-        return {
-            "name": "Promotion REST API Service",
-            "version": "1.0",
-            "paths": api.url_for(PromotionCollection, _external=True),
-        }, status.HTTP_200_OK
 
 
 ######################################################################
@@ -183,7 +160,7 @@ def expect_content_type(expected_type="application/json"):
         return decorated
 
     return decorator
-
+  
 
 ######################################################################
 #  PATH: /promotions/{id}
@@ -404,6 +381,19 @@ class ExtendResource(Resource):
         promotion.end_date = end_date
         promotion.update()
         return promotion.serialize(), status.HTTP_200_OK
+
+
+######################################################################
+# /api - Root API entry
+######################################################################
+@api.route("/", strict_slashes=False)
+class ApiRoot(Resource):
+    def get(self):
+        return {
+            "name": "Promotion REST API Service",
+            "version": "1.0",
+            "paths": api.url_for(PromotionCollection, _external=True),
+        }, status.HTTP_200_OK
 
 
 ######################################################################

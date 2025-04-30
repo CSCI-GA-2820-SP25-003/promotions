@@ -21,8 +21,23 @@ and SQL database
 import sys
 from flask import Flask
 from flask_cors import CORS
+from flask_restx import Api
 from service import config
 from service.common import log_handlers
+
+
+######################################################################
+# Configure Swagger before initializing it
+######################################################################
+api = Api(
+    title="Promotion REST API Service",
+    version="1.0.0",
+    description="This is a promotion microservice server.",
+    prefix="/api",
+    doc="/apidocs",
+    default="promotions",
+    default_label="Promotion operations",
+)
 
 
 ############################################################
@@ -63,4 +78,5 @@ def create_app():
 
         app.logger.info("Service initialized!")
 
+        api.init_app(app)
         return app
