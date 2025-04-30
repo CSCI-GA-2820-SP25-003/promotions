@@ -389,8 +389,9 @@ class ExtendResource(Resource):
 ######################################################################
 @api.route("/", strict_slashes=False)
 class ApiRoot(Resource):
-    """Returns metadata for the root of the Promotion API."""
+    """Returns the root API metadata."""
     def get(self):
+        """Returns metadata for the root of the Promotion API."""
         return {
             "name": "Promotion REST API Service",
             "version": "1.0",
