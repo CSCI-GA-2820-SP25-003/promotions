@@ -53,8 +53,9 @@ def frontend_index():
     return app.send_static_file("index.html")
 
 
-@app.route('/api', strict_slashes=False)
-def get():
+@api.route('', strict_slashes=False, endpoint='api_root')
+class ApiRoot(Resource):
+    def get(self):
         return {
             "name": "Promotion REST API Service",
             "version": "1.0",
