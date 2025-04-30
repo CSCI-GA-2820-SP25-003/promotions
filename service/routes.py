@@ -53,23 +53,14 @@ def frontend_index():
     return app.send_static_file("index.html")
 
 
-@api.route('/', endpoint='api_root_slash')
+@api.route('/', strict_slashes=False, endpoint='api_root')
 class ApiRootSlash(Resource):
     def get(self):
-        return _root_payload(), status.HTTP_200_OK
-
-@api.route('', endpoint='api_root_slash')
-class ApiRootNoSlash(Resource):
-    def get(self):
-        return _root_payload(), status.HTTP_200_OK
-
-
-def _root_payload():
-    return {
-        "name": "Promotion REST API Service",
-        "version": "1.0",
-        "paths": api.url_for(PromotionCollection, _external=True),
-    }
+        return {
+            "name": "Promotion REST API Service",
+            "version": "1.0",
+            "paths": api.url_for(PromotionCollection, _external=True),
+        }, status.HTTP_200_OK
 
 
 ######################################################################
