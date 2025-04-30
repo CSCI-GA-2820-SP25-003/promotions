@@ -1,4 +1,5 @@
 from selenium.webdriver.common.by import By
+from behave import when, then
 
 
 @when('I visit the "home page"')

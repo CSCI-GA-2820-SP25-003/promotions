@@ -160,7 +160,7 @@ def expect_content_type(expected_type="application/json"):
         return decorated
 
     return decorator
-  
+
 
 ######################################################################
 #  PATH: /promotions/{id}
