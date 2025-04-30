@@ -1,8 +1,55 @@
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: sample-pipeline
+  name: cd-pipeline
 spec:
+  description: |
+    A CI/CD pipeline for the promotion project that performs linting,
+    testing, image building, and BDD testing.
+  params:
+    - name: IMAGE
+      type: string
+      description: The full image name including registry to be built and pushed.
+    - name: base-url
+      type: string
+      description: The base URL of the deployed app for behave tests.
   workspaces:
     - name: shared-workspace
-  tasks: []
+      description: Shared source code workspace for all tasks.
+  tasks:
+    - name: lint
+      taskRef:
+        name: lint-promotion
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: test
+      runAfter: ["lint"]
+      taskRef:
+        name: test-promotion
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: build-image
+      runAfter: ["test"]
+      taskRef:
+        name: build-promotion-image
+      params:
+        - name: IMAGE
+          value: $(params.IMAGE)
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: bdd-test
+      runAfter: ["build-image"]
+      taskRef:
+        name: behave-test
+      params:
+        - name: base-url
+          value: $(params.base-url)
+      workspaces:
+        - name: source
+          workspace: shared-workspace

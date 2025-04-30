@@ -1,11 +1,118 @@
+# 1. Lint Task using flake8
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: sample-task
+  name: lint-promotion
 spec:
+  description: "Run flake8 to lint Python source code in the promotion project"
+  workspaces:
+    - name: source
+  params:
+    - name: image
+      default: python:3.11-slim
+    - name: path
+      default: "."
+    - name: args
+      type: array
+      default: ["--count", "."]
   steps:
-    - name: echo
-      image: alpine
+    - name: run-flake8
+      image: $(params.image)
+      workingDir: $(workspaces.source.path)
       script: |
-        #!/bin/sh
-        echo "This is a placeholder task."
+        #!/bin/bash
+        set -e
+        echo "***** Installing flake8 *****"
+        pip install --upgrade pip flake8
+        echo "***** Running flake8 *****"
+        flake8 $(params.args)
+
+---
+
+# 2. Pytest Task with pipenv
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: test-promotion
+spec:
+  description: "Run pytest unit tests in the promotion project"
+  workspaces:
+    - name: source
+  params:
+    - name: image
+      default: python:3.11-slim
+    - name: args
+      type: array
+      default: ["--cov=service", "tests"]
+  steps:
+    - name: run-pytest
+      image: $(params.image)
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/bin/bash
+        set -e
+        echo "***** Installing pipenv and dependencies *****"
+        pip install --upgrade pip pipenv
+        pipenv install --dev
+        echo "***** Running pytest *****"
+        pipenv run pytest $(params.args)
+
+---
+
+# 3. Build Docker Image with buildah
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: build-promotion-image
+spec:
+  description: "Build and push Docker image for the promotion project"
+  workspaces:
+    - name: source
+  params:
+    - name: IMAGE
+      description: The image name to build and push
+      type: string
+  steps:
+    - name: buildah-build
+      image: quay.io/buildah/stable:latest
+      workingDir: $(workspaces.source.path)
+      securityContext:
+        privileged: true
+      script: |
+        #!/bin/bash
+        set -e
+        echo "***** Building image $(params.IMAGE) *****"
+        buildah bud -t $(params.IMAGE) .
+        echo "***** Pushing image $(params.IMAGE) *****"
+        buildah push $(params.IMAGE)
+
+---
+
+# 4. Behave BDD Testing
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: behave-test
+spec:
+  description: "Run BDD tests using behave and Selenium in the promotion project"
+  workspaces:
+    - name: source
+  params:
+    - name: base-url
+      description: The deployed service base URL
+      type: string
+  steps:
+    - name: run-behave
+      image: python:3.11-slim
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: BASE_URL
+          value: $(params.base-url)
+      script: |
+        #!/bin/bash
+        set -e
+        echo "***** Installing pipenv and dependencies *****"
+        pip install --upgrade pip pipenv
+        pipenv install --dev
+        echo "***** Running behave against $BASE_URL *****"
+        pipenv run behave
